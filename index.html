@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>비평문 게시판</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background: #f0f0f5; min-height: 100vh; padding: 24px 16px; }
+.app { max-width: 560px; margin: 0 auto; }
+.screen { display: none; }
+.screen.active { display: block; }
+.write-card { background: #fff; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 24px rgba(0,0,0,0.10); margin-bottom: 16px; }
+.page-title { font-size: 20px; font-weight: 700; color: #1c1c1e; text-align: center; margin-bottom: 4px; }
+.page-sub { font-size: 13px; color: #888; text-align: center; margin-bottom: 1.5rem; }
+.category-badge { display: inline-block; background: #f0effe; color: #5a52cc; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; margin-bottom: 1.2rem; }
+.field { margin-bottom: 12px; }
+.field label { font-size: 12px; color: #888; display: block; margin-bottom: 5px; font-weight: 500; }
+.field input, .field textarea { width: 100%; border: 1.5px solid #e5e5ea; border-radius: 10px; padding: 9px 13px; font-size: 15px; color: #1c1c1e; outline: none; font-family: inherit; background: #f7f7f9; transition: border-color 0.15s; resize: none; }
+.field input:focus, .field textarea:focus { border-color: #7F77DD; background: #fff; }
+.music-btns { display: flex; gap: 8px; }
+.music-btn { flex: 1; padding: 10px 8px; border-radius: 10px; border: 1.5px solid #e5e5ea; font-size: 13px; cursor: pointer; background: #f7f7f9; color: #555; font-family: inherit; transition: all 0.15s; text-align: center; }
+.music-btn.selected.arirang { background: #e8f4fd; border-color: #4a9edd; color: #1a5f99; font-weight: 600; }
+.music-btn.selected.beo { background: #fff0f5; border-color: #dd6b9e; color: #99244f; font-weight: 600; }
+.submit-btn { width: 100%; padding: 13px; border-radius: 12px; border: none; background: #7F77DD; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; margin-top: 4px; }
+.submit-btn:hover { background: #6a62c4; }
+.view-btn { width: 100%; padding: 11px; border-radius: 12px; border: 1.5px solid #7F77DD; background: transparent; color: #7F77DD; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 8px; }
+.board-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.board-title { font-size: 18px; font-weight: 700; color: #1c1c1e; }
+.back-btn { font-size: 13px; color: #7F77DD; cursor: pointer; background: none; border: none; font-family: inherit; }
+.filter-row { display: flex; gap: 6px; margin-bottom: 14px; }
+.filter-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e5e5ea; background: #f7f7f9; color: #888; font-size: 12px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.filter-btn.active { background: #7F77DD; border-color: #7F77DD; color: #fff; font-weight: 600; }
+.post-card { background: #fff; border-radius: 14px; padding: 1rem 1.2rem; margin-bottom: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+.post-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.post-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.post-name { font-size: 14px; font-weight: 600; color: #1c1c1e; }
+.post-music { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+.post-music.arirang { background: #e8f4fd; color: #1a5f99; }
+.post-music.beo { background: #fff0f5; color: #99244f; }
+.post-time { font-size: 11px; color: #bbb; }
+.post-essay { font-size: 14px; color: #333; line-height: 1.7; margin-bottom: 10px; }
+.post-actions { display: flex; gap: 10px; align-items: center; }
+.comment-toggle-btn { font-size: 12px; color: #7F77DD; background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; }
+.del-btn { font-size: 11px; color: #ccc; background: none; border: none; cursor: pointer; font-family: inherit; margin-left: auto; }
+.del-btn:hover { color: #e74c3c; }
+.comments-wrap { margin-top: 10px; border-top: 1px solid #f0f0f5; padding-top: 10px; display: none; }
+.comments-wrap.open { display: block; }
+.comment-box { margin-bottom: 8px; padding: 8px 10px; background: #f7f7f9; border-radius: 8px; }
+.comment-box.is-reply { margin-left: 20px; background: #f0effe33; border-left: 2px solid #c8c4f0; }
+.cm-header { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.cm-name { font-size: 12px; font-weight: 600; color: #1c1c1e; }
+.cm-time { font-size: 10px; color: #bbb; }
+.cm-text { font-size: 13px; color: #444; line-height: 1.6; }
+.cm-actions { display: flex; gap: 8px; margin-top: 4px; }
+.cm-reply-btn { font-size: 11px; color: #7F77DD; background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; }
+.cm-del-btn { font-size: 11px; color: #ccc; background: none; border: none; cursor: pointer; font-family: inherit; }
+.cm-del-btn:hover { color: #e74c3c; }
+.inline-form { display: flex; gap: 6px; margin-top: 8px; }
+.inline-form.indented { margin-left: 20px; }
+.if-name { width: 72px; flex-shrink: 0; border: 1px solid #e5e5ea; border-radius: 8px; padding: 6px 8px; font-size: 12px; color: #1c1c1e; outline: none; font-family: inherit; background: #fff; }
+.if-text { flex: 1; border: 1px solid #e5e5ea; border-radius: 8px; padding: 6px 8px; font-size: 12px; color: #1c1c1e; outline: none; font-family: inherit; background: #fff; resize: none; }
+.if-name:focus, .if-text:focus { border-color: #7F77DD; }
+.if-submit { flex-shrink: 0; padding: 6px 10px; border-radius: 8px; border: none; background: #7F77DD; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.empty { text-align: center; padding: 3rem 0; color: #bbb; font-size: 14px; }
+.loading { text-align: center; padding: 2rem 0; color: #bbb; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="screen active" id="screen-write">
+    <div class="write-card">
+      <p class="page-title">비평문 게시판</p>
+      <p class="page-sub">식민 지배를 배경으로 한 민요 비평</p>
+      <div style="text-align:center;margin-bottom:1.2rem;">
+        <span class="category-badge">본조아리랑 × 베오꽃과 구름</span>
+      </div>
+      <div class="field">
+        <label>이름</label>
+        <input type="text" id="input-name" placeholder="이름을 입력하세요">
+      </div>
+      <div class="field">
+        <label>민요 선택</label>
+        <div class="music-btns">
+          <button class="music-btn" id="btn-arirang">🎵 본조아리랑</button>
+          <button class="music-btn" id="btn-beo">🌸 베오꽃과 구름</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>비평 문장</label>
+        <textarea id="input-essay" rows="5" placeholder="가사 속 단어와 식민 지배 시대를 연결 지어 비평문을 작성해봅시다."></textarea>
+      </div>
+      <button class="submit-btn" id="btn-submit-post">게시하기</button>
+      <button class="view-btn" id="btn-goto-board">게시판 보기</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-board">
+    <div class="board-header">
+      <span class="board-title">비평문 게시판</span>
+      <button class="back-btn" id="btn-back">← 작성하기</button>
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn active" data-filter="all">전체</button>
+      <button class="filter-btn" data-filter="arirang">🎵 본조아리랑</button>
+      <button class="filter-btn" data-filter="beo">🌸 베오꽃과 구름</button>
+    </div>
+    <div id="posts-container"><p class="loading">불러오는 중...</p></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyANGEfDRLzXnuLftfSngBEktHW591yCDtE",
+  authDomain: "critical-9da12.firebaseapp.com",
+  databaseURL: "https://critical-9da12-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "critical-9da12",
+  storageBucket: "critical-9da12.firebasestorage.app",
+  messagingSenderId: "125725394945",
+  appId: "1:125725394945:web:d27fd1eafe1fd8778a9800"
+});
+const db = getDatabase(app);
+const postsRef = ref(db, 'posts');
+
+// ── 상태 ──
+let selectedMusic = '';
+let currentFilter = 'all';
+let allPosts = {};
+let openComments = new Set();  // postKey
+let openReplies = new Set();   // commentKey
+
+// ── 유틸 ──
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function now() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// ── 화면 전환 ──
+document.getElementById('btn-goto-board').onclick = () => {
+  document.getElementById('screen-write').classList.remove('active');
+  document.getElementById('screen-board').classList.add('active');
+};
+document.getElementById('btn-back').onclick = () => {
+  document.getElementById('screen-board').classList.remove('active');
+  document.getElementById('screen-write').classList.add('active');
+};
+
+// ── 민요 선택 ──
+document.getElementById('btn-arirang').onclick = () => {
+  selectedMusic = 'arirang';
+  document.getElementById('btn-arirang').className = 'music-btn selected arirang';
+  document.getElementById('btn-beo').className = 'music-btn';
+};
+document.getElementById('btn-beo').onclick = () => {
+  selectedMusic = 'beo';
+  document.getElementById('btn-beo').className = 'music-btn selected beo';
+  document.getElementById('btn-arirang').className = 'music-btn';
+};
+
+// ── 필터 ──
+document.querySelector('.filter-row').onclick = e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  currentFilter = btn.dataset.filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPosts();
+};
+
+// ── 게시 ──
+document.getElementById('btn-submit-post').onclick = async () => {
+  const name = document.getElementById('input-name').value.trim();
+  const essay = document.getElementById('input-essay').value.trim();
+  if (!name) { alert('이름을 입력해 주세요.'); return; }
+  if (!selectedMusic) { alert('민요를 선택해 주세요.'); return; }
+  if (!essay) { alert('비평 문장을 입력해 주세요.'); return; }
+  await push(postsRef, { name, music: selectedMusic, essay, time: now(), ts: Date.now() });
+  document.getElementById('input-name').value = '';
+  document.getElementById('input-essay').value = '';
+  selectedMusic = '';
+  document.getElementById('btn-arirang').className = 'music-btn';
+  document.getElementById('btn-beo').className = 'music-btn';
+  document.getElementById('screen-write').classList.remove('active');
+  document.getElementById('screen-board').classList.add('active');
+};
+
+// ── Firebase 실시간 구독 ──
+onValue(postsRef, snap => {
+  allPosts = snap.val() || {};
+  renderPosts();
+});
+
+// ── 렌더링 ──
+function renderPosts() {
+  const container = document.getElementById('posts-container');
+  let entries = Object.entries(allPosts).sort((a,b) => (b[1].ts||0)-(a[1].ts||0));
+  if (currentFilter !== 'all') entries = entries.filter(([,p]) => p.music === currentFilter);
+  if (!entries.length) { container.innerHTML = '<p class="empty">아직 게시된 비평문이 없어요.</p>'; return; }
+  container.innerHTML = entries.map(([pk, p]) => {
+    const comments = p.comments ? Object.entries(p.comments).sort((a,b)=>(a[1].ts||0)-(b[1].ts||0)) : [];
+    const totalCount = comments.reduce((n,[,c]) => n + 1 + (c.replies ? Object.keys(c.replies).length : 0), 0);
+    const isOpen = openComments.has(pk);
+    return `
+    <div class="post-card">
+      <div class="post-header">
+        <div class="post-meta">
+          <span class="post-name">${esc(p.name)}</span>
+          <span class="post-music ${p.music}">${p.music==='arirang'?'🎵 본조아리랑':'🌸 베오꽃과 구름'}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="post-time">${esc(p.time)}</span>
+          <button class="del-btn" data-type="post" data-pk="${pk}">삭제</button>
+        </div>
+      </div>
+      <div class="post-essay">${esc(p.essay).replace(/\n/g,'<br>')}</div>
+      <div class="post-actions">
+        <button class="comment-toggle-btn" data-type="toggle-comment" data-pk="${pk}">
+          💬 댓글${totalCount > 0 ? ' ' + totalCount : ''}
+        </button>
+      </div>
+      <div class="comments-wrap ${isOpen ? 'open' : ''}" id="cw-${pk}">
+        ${comments.map(([ck,c]) => renderComment(pk,ck,c)).join('')}
+        <div class="inline-form" id="cf-${pk}" style="${isOpen?'':'display:none'}">
+          <input class="if-name" placeholder="이름" id="cn-${pk}">
+          <textarea class="if-text" rows="2" placeholder="댓글 입력" id="ct-${pk}"></textarea>
+          <button class="if-submit" data-type="submit-comment" data-pk="${pk}">등록</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderComment(pk, ck, c) {
+  const replies = c.replies ? Object.entries(c.replies).sort((a,b)=>(a[1].ts||0)-(b[1].ts||0)) : [];
+  const isOpen = openReplies.has(ck);
+  return `
+  <div class="comment-box">
+    <div class="cm-header">
+      <span class="cm-name">${esc(c.name)}</span>
+      <span class="cm-time">${esc(c.time)}</span>
+    </div>
+    <div class="cm-text">${esc(c.text).replace(/\n/g,'<br>')}</div>
+    <div class="cm-actions">
+      <button class="cm-reply-btn" data-type="toggle-reply" data-pk="${pk}" data-ck="${ck}">답글</button>
+      <button class="cm-del-btn" data-type="comment" data-pk="${pk}" data-ck="${ck}">삭제</button>
+    </div>
+    ${isOpen ? `
+    <div class="inline-form indented" id="rf-${ck}">
+      <input class="if-name" placeholder="이름" id="rn-${ck}">
+      <textarea class="if-text" rows="2" placeholder="답글 입력" id="rt-${ck}"></textarea>
+      <button class="if-submit" data-type="submit-reply" data-pk="${pk}" data-ck="${ck}">등록</button>
+    </div>` : ''}
+    ${replies.map(([rk,r]) => `
+    <div class="comment-box is-reply">
+      <div class="cm-header">
+        <span class="cm-name">↳ ${esc(r.name)}</span>
+        <span class="cm-time">${esc(r.time)}</span>
+      </div>
+      <div class="cm-text">${esc(r.text).replace(/\n/g,'<br>')}</div>
+      <div class="cm-actions">
+        <button class="cm-del-btn" data-type="reply" data-pk="${pk}" data-ck="${ck}" data-rk="${rk}">삭제</button>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+// ── 이벤트 위임 (한 번만 등록) ──
+document.getElementById('posts-container').addEventListener('click', async e => {
+  const btn = e.target.closest('[data-type]');
+  if (!btn) return;
+  const t = btn.dataset.type;
+  const pk = btn.dataset.pk;
+  const ck = btn.dataset.ck;
+  const rk = btn.dataset.rk;
+
+  if (t === 'post') {
+    if (!confirm('게시물을 삭제할까요?')) return;
+    await remove(ref(db, `posts/${pk}`));
+  }
+
+  else if (t === 'toggle-comment') {
+    if (openComments.has(pk)) {
+      openComments.delete(pk);
+    } else {
+      openComments.add(pk);
+    }
+    renderPosts();
+  }
+
+  else if (t === 'toggle-reply') {
+    if (openReplies.has(ck)) {
+      openReplies.delete(ck);
+    } else {
+      openReplies.add(ck);
+    }
+    renderPosts();
+  }
+
+  else if (t === 'submit-comment') {
+    const name = document.getElementById(`cn-${pk}`).value.trim();
+    const text = document.getElementById(`ct-${pk}`).value.trim();
+    if (!name) { alert('이름을 입력해 주세요.'); return; }
+    if (!text) { alert('내용을 입력해 주세요.'); return; }
+    await push(ref(db, `posts/${pk}/comments`), { name, text, time: now(), ts: Date.now() });
+    openComments.add(pk);
+  }
+
+  else if (t === 'submit-reply') {
+    const name = document.getElementById(`rn-${ck}`).value.trim();
+    const text = document.getElementById(`rt-${ck}`).value.trim();
+    if (!name) { alert('이름을 입력해 주세요.'); return; }
+    if (!text) { alert('내용을 입력해 주세요.'); return; }
+    await push(ref(db, `posts/${pk}/comments/${ck}/replies`), { name, text, time: now(), ts: Date.now() });
+    openReplies.delete(ck);
+    openComments.add(pk);
+  }
+
+  else if (t === 'comment') {
+    if (!confirm('댓글을 삭제할까요?')) return;
+    await remove(ref(db, `posts/${pk}/comments/${ck}`));
+  }
+
+  else if (t === 'reply') {
+    if (!confirm('답글을 삭제할까요?')) return;
+    await remove(ref(db, `posts/${pk}/comments/${ck}/replies/${rk}`));
+  }
+});
+</script>
+</body>
+</html>
